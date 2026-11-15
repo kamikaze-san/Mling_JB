@@ -14,7 +14,7 @@ import random
 from pathlib import Path
 
 V = Path(__file__).resolve().parent.parent / "data" / "04_eval_cache" / "strata_judge_validation"
-DECIDERS = [("pplx_flash", "decider flash v1.2"), ("flash_v13", "decider flash v1.3"),
+DECIDERS = [("d1_2b", "Liquid D1-2B"), ("pplx_flash", "decider flash v1.2"), ("flash_v13", "decider flash v1.3"),
             ("v11_27b", "decider 27B v1.1"), ("v13_27b", "decider 27B v1.3")]
 
 
