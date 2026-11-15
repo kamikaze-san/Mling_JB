@@ -42,32 +42,36 @@ def fig_compliance():
     b, f = stance(BASE), stance(FINAL)
     ids = [i for i, d in b.items() if d["source"] in HELDOUT]
     rate = lambda S, sub: 100 * sum(S[i]["complied"] for i in sub) / len(sub)
-    tb, tf = rate(b, ids), rate(f, ids)
-    W, left, right, top, rowh = 760, 196, 712, 150, 38
+    W, left, right, top, rowh = 720, 176, 680, 92, 32
     x = lambda v: left + (right - left) * v / 100
-    H = top + rowh * len(SURF) + 52
-    body = [t(32, 42, "Jailbreak compliance by language, before and after", 19, weight=650),
-            t(32, 66, "Share of 382 held-out multi-turn attack conversations the model went along with. Lower is safer.", 13, INK2),
-            t(32, 112, f"{tb:.0f}%", 34, MUTED, 650), t(112, 110, "→", 28, MUTED),
-            t(146, 112, f"{tf:.0f}%", 34, ACCENT, 700), t(222, 98, "all eight surfaces,", 13, INK2),
-            t(222, 115, "base → final model", 13, INK2),
-            f'<circle cx="{W - 250}" cy="100" r="6" fill="{BEFORE}"/>', t(W - 238, 104.5, "Tiny Aya Global (base)", 12.5, INK2),
-            f'<circle cx="{W - 250}" cy="121" r="6" fill="{ACCENT}"/>', t(W - 238, 125.5, "Final model", 12.5, INK2)]
+    rows = [("Overall", ids)] + [(LABEL[s], [i for i in ids if b[i]["profile"] == s]) for s in SURF]
+    gap = 18                                   # space between the overall row and the surfaces
+    ybot = top + rowh * (len(rows) - 1) + gap
+    H = ybot + 46
+    body = [f'<text x="28" y="44" font-size="16" fill="{INK}" font-weight="650">Jailbreak compliance '
+            f'<tspan font-size="13" fill="{INK2}" font-weight="400">(lower is safer)</tspan></text>',
+            f'<circle cx="{W - 236}" cy="40" r="5" fill="{BEFORE}"/>', t(W - 226, 44, "Tiny Aya Global (base)", 11.5, INK2),
+            f'<circle cx="{W - 236}" cy="58" r="5" fill="{ACCENT}"/>', t(W - 226, 62, "Final model", 11.5, INK2),
+            # highlight band behind the overall row
+            f'<rect x="20" y="{top - 15}" width="{W - 40}" height="30" rx="6" fill="{ACCENT}" fill-opacity="0.07"/>']
     for v in (0, 25, 50, 75, 100):
-        body.append(f'<line x1="{x(v):.1f}" y1="{top - 10}" x2="{x(v):.1f}" y2="{top + rowh * len(SURF) - 14}" stroke="{RULE}" stroke-width="1"/>')
-        body.append(t(x(v), top + rowh * len(SURF) + 4, f"{v}%", 11.5, MUTED, anchor="middle"))
-    for r, s in enumerate(SURF):
-        sub = [i for i in ids if b[i]["profile"] == s]
+        body.append(f'<line x1="{x(v):.1f}" y1="{top - 15}" x2="{x(v):.1f}" y2="{ybot + 10}" stroke="{RULE}" stroke-width="1"/>')
+        body.append(t(x(v), ybot + 28, f"{v}%", 10.5, MUTED, anchor="middle"))
+    for r, (name, sub) in enumerate(rows):
+        overall = r == 0
+        y = top if overall else top + rowh * r + gap
         vb, vf = rate(b, sub), rate(f, sub)
-        y = top + rowh * r + 8
-        body.append(t(left - 16, y + 4.5, LABEL[s], 13, INK, anchor="end"))
-        body.append(f'<line x1="{x(vf) + 15:.1f}" y1="{y}" x2="{x(vb) - 8:.1f}" y2="{y}" stroke="{ACCENT}" stroke-opacity="0.35" stroke-width="3" stroke-linecap="round"/>')
-        body.append(f'<path d="M{x(vf) + 9:.1f},{y} l9,-5 v10 z" fill="{ACCENT}" fill-opacity="0.6"/>')
-        body.append(f'<circle cx="{x(vb):.1f}" cy="{y}" r="7" fill="{BEFORE}"/>')
-        body.append(f'<circle cx="{x(vf):.1f}" cy="{y}" r="7.5" fill="{ACCENT}" stroke="{BG}" stroke-width="2"/>')
-        body.append(t(x(vb) + 13, y + 4.5, f"{vb:.0f}%", 12, MUTED))
-        body.append(t(x(vf) - 13, y + 4.5, f"{vf:.0f}%", 12.5, ACCENT, 650, "end"))
-    (OUT / "compliance_by_surface.svg").write_text(svg(W, H, body, "Jailbreak compliance by language, base vs final model"), encoding="utf-8")
+        rb, rf, lw = (8, 8.5, 3.5) if overall else (6, 6.5, 2.5)
+        body.append(t(left - 14, y + 4, name, 12.5 if overall else 12, INK, 700 if overall else 400, "end"))
+        body.append(f'<line x1="{x(vf) + 14:.1f}" y1="{y}" x2="{x(vb) - rb - 1:.1f}" y2="{y}" stroke="{ACCENT}" '
+                    f'stroke-opacity="{0.55 if overall else 0.3}" stroke-width="{lw}" stroke-linecap="round"/>')
+        body.append(f'<path d="M{x(vf) + rf + 1:.1f},{y} l8,-4.5 v9 z" fill="{ACCENT}" fill-opacity="{0.8 if overall else 0.55}"/>')
+        body.append(f'<circle cx="{x(vb):.1f}" cy="{y}" r="{rb}" fill="{BEFORE}"/>')
+        body.append(f'<circle cx="{x(vf):.1f}" cy="{y}" r="{rf}" fill="{ACCENT}" stroke="{BG}" stroke-width="2"/>')
+        fmt = (lambda v: f"{v:.1f}%") if overall else (lambda v: f"{v:.0f}%")
+        body.append(t(x(vb) + rb + 6, y + 4, fmt(vb), 11.5 if overall else 11, INK2 if overall else MUTED, 600 if overall else 400))
+        body.append(t(x(vf) - rf - 6, y + 4, fmt(vf), 12 if overall else 11.5, ACCENT, 700 if overall else 600, "end"))
+    (OUT / "compliance_by_surface.svg").write_text(svg(W, H, body, "Jailbreak compliance, base vs final model, overall and by language"), encoding="utf-8")
 
 
 def fig_flores():
