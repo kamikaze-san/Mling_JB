@@ -157,7 +157,7 @@ re-attack against the hardened model (see Limitations).
 | AlignTune | Not used. It is a post-training toolkit for SFT, DPO, PPO and GRPO with TRL or Unsloth back ends (arXiv:2602.09621). On-policy distillation, which our stage 2 needed, is not among its methods: continuing the existing LoRA, the original model (adapter off, same weights) as teacher, and an external teacher mixed per prompt with a frozen copy of the safe adapter. So we wrote our own trainer on TRL/PEFT. |
 
 **How they connect:** STRATA attacks → three judges → preference pairs → **CuratorKIT** → DPO (LoRA, HF Jobs) → GGUF
-LoRA → evaluation harness on the 4-bit model → stage-2 repair → same evaluation → **AuditKIT** cross-check of base vs final. [TODO: diagram]
+LoRA → evaluation harness on the 4-bit model → stage-2 repair → same evaluation → **AuditKIT** cross-check of base vs final.
 
 **CuratorKIT filtering:** 1,262 pairs in → **1,257 kept** (the final training set has 1,255: the 2 others are human-written safety pairs with no surface label, so they fit none of the eight surfaces). Dropped 5: 3 by SecretsGate (high-entropy base64/hex strings)
 and 2 exact duplicates (2 benign, 3 safety). No pair was dropped by ToxicityGate. Per surface the drops were en 1, hi 1,
@@ -576,6 +576,31 @@ for stage 1, +3.3 [0, +7.7] after retention.
 Every number above is measured on the deployed artefact: the official Q4_K_M GGUF with the GGUF LoRA in llama.cpp, not on
 the bf16 training model.
 
+**Shipping it as one merged 4-bit file costs some safety** (`EVAL_PROTOCOL.md` §5, `scripts/run_quant_survival.sh`). We
+merged the final LoRA into the bf16 weights and quantized the result to Q4_K_M. To compare fairly, we also re-quantized
+the base with the identical commands; it matches the official GGUF (compliance 71.7% vs 73.6%, every FLORES direction
+within ±0.16).
+
+| Held-out (n = 382) | Compliance | FLORES vs its base | Twins refused |
+|---|---|---|---|
+| Re-quantized base | 71.7% | — | 0/91 |
+| Final model, runtime LoRA (reported) | **12.6%** | −0.14 to +0.54 | 5/91 |
+| Final model, merged and re-quantized | 19.4% | −0.58 to +0.87 | 4/91 |
+
+- **Capability survives the merge:** every FLORES direction stays within the gate, and Belebele is unchanged or better.
+- **Safety partly does not:** the merged file goes along with 19.4% of attacks, +6.8 points [+3.4, +10.2] against the
+  runtime LoRA, mostly on Hindi (12% → 35%).
+- **Why:** rounding the merged weights to 4 bits partly erases the small safety update, while a runtime LoRA keeps it in
+  16-bit on top of the 4-bit base. The merged file is still far safer than the base (−52.4 points [−57.9, −47.1]).
+
+**Recommendation:** deploy the final model as the base GGUF plus the LoRA (`--lora adapter.gguf`), not as a merged
+re-quantized file. The runtime LoRA costs a little speed. On an M4 Pro with llama-server, generation runs at 78.9 tokens/s against
+84.4 for the base (−6.5%), and prompt processing at 570 against 675 tokens/s; a merged file runs at base speed.
+
+Reproducing the merge needs one fix: `convert_hf_to_gguf.py` takes the end-of-sequence token from `tokenizer_config`
+(`<|END_OF_TURN_TOKEN|>`, id 6), while the official GGUF and `generation_config.json` use id 3. With id 6, generation
+does not stop where the deployed model stops. `scripts/export_adapter.py` now sets id 3.
+
 ### Sample inputs and outputs
 Omitted on purpose: no attack prompts or replies appear in this write-up. The gated dataset holds the full transcripts.
 
@@ -585,6 +610,17 @@ Omitted on purpose: no attack prompts or replies appear in this write-up. The ga
 |---|---|---|
 | All DPO training and stage 2 | HF Jobs, 1 × A10G (large, later small) | $20.19, of which $20 came from the hackathon's HF credits |
 | Attack generation, judging, evaluation | Apple M4 Pro Mac (Metal, MLX) + RTX 4060 laptop | own hardware, no cloud cost |
+
+Time on our own machines, approximate, from run logs:
+
+| Work | Machine | Hours |
+|---|---|---|
+| STRATA attack generation (attacker Qwen3.6-35B-A3B vs Tiny Aya, 5 runs) | Mac (M4 Pro, 48 GB) | ~47 |
+| Pair labelling (gpt-oss-safeguard), chosen replies, CuratorKIT | Mac | ~8 |
+| Evaluation: generation, Qwen3Guard, decider, capability (about 37 runs) | Mac | ~45 |
+| Evaluation offloaded to a laptop (15 runs: generation + capability) | Laptop (RTX 4060, 8 GB) | ~18 |
+| Judge validation (128-row sheet, 4 deciders, 3 harm judges), AuditKIT, quantization check | Mac | ~10 |
+| **Total** | | **~110 Mac + ~18 laptop** |
 
 **Running the final model** needs no special hardware. It is a 2.0 GB Q4_K_M GGUF, the official base with the LoRA
 merged in, and it runs in llama.cpp on a laptop. On an Apple M4 Pro (Metal), llama-bench gives about 680 tokens/s for
@@ -613,7 +649,7 @@ lower bounds. The safety adapter adds no inference cost once merged.
 - **Leakage:** one twin appears in both training and evaluation.
 - **Two inference machines:** some runs were generated on a laptop; the base model's FLORES scores differ by up to 0.7
   chrF++ between the machines in one direction.
-- **One quantisation:** only Q4_K_M.
+- **One quantisation:** only Q4_K_M. Merging the LoRA and re-quantizing costs 6.8 points of compliance (§6, deployed model), so the reported numbers hold for the runtime-LoRA deployment.
 
 ### Dual-use and ethics
 The attack data could help someone jailbreak small multilingual models. We release it gated (approved automatically on
@@ -650,6 +686,18 @@ together with a fix. The attack data stays gated.
   2019; Mirzadeh et al., 2020), and here it would also pull harder against the safety anchor. Sweep the specialist
   weight (our alpha 0.5) to find where the two balance.
 
+- **A safety LoRA that survives merging and 4-bit quantization.** Merging costs 6.8 points of compliance (§6). Cheap
+  fixes to test, in order:
+  - Keep the tensors that carry the safety update, the value and MLP down projections (§6.4), at higher precision
+    when quantizing (llama-quantize per-tensor types).
+  - Calibrate the quantization on multilingual safety data (an importance matrix, `--imatrix`).
+  - Pre-scale the update along the safety direction before merging, which §6.4's dose-response suggests is safe for
+    capability.
+  - Try Q5_K_M, Q6_K and Q8_0 to find the bit width at which the update survives.
+  - Quantization-aware distillation: use the runtime-LoRA model (12.6%) as the teacher and the single 4-bit file as
+    the student. Either train with simulated 4-bit rounding and a KL loss to the teacher, which our OPD trainer
+    already provides, or calibrate the quantizer on the teacher's behaviour.
+
 ## Discussion: what we learned
 - About a thousand multi-turn pairs across scripts and code-mixing cut a 3.35B-parameter model's jailbreak compliance
   by 83%, on every surface, and the safety transfers to a language it never saw in training.
@@ -683,12 +731,38 @@ together with a fix. The attack data stays gated.
 - **Layout and commands:** see `README.md`.
 
 ### Declaration of work done outside the hackathon
-STRATA predates the hackathon: it began as an extension of AutoDAN-Turbo into a multimodal attacker (Feb–Aug 2026). Its
-multilingual text mode, the whole Multilingual_JB pipeline, all data, training, evaluation and analysis were done during
-the hackathon (Nov 2026).
+- **Before the hackathon (Feb–May 2026):** STRATA was a multi-turn, **multimodal** jailbreak framework for
+  vision-language models, built on AutoDAN-Turbo's open-source code (MIT). It contributed the lifelong
+  strategy-library loop (attacker, scorer, summarizer, strategy retrieval) and multi-turn conversations.
+- **During the hackathon (Nov 2026), new:**
+  - STRATA's **multilingual, language-mixed text mode**: language and script profiles for the eight surfaces, a script gate
+    that rejects attacks written in the wrong script, a scheduler that rotates surfaces, per-language strategy
+    retrieval, tactic rotation, and the held-out and top-up attack runs;
+  - the whole Multilingual_JB pipeline;
+  - all data, training, evaluation and analysis in this write-up.
+
+No model, dataset or result reported here was produced before the hackathon.
 
 ## Team
-[ASK: names, handles, contributions; include the teammate who hand-labelled the 128 judge-validation replies (§5)]
+- **Venkat Aniruddh Thamatam** (GitHub: [kamikaze-san](https://github.com/kamikaze-san), Hugging Face:
+  [kamikaze-san](https://huggingface.co/kamikaze-san), Discord: zoteonaboat)
+  - Set the research direction, hypotheses and experiment choices, and interpreted the results.
+  - Built STRATA, first as a multimodal framework and, during the hackathon, its multilingual and code-mixed text mode,
+    and ran the attacks.
+  - Built the safety training: the preference data and DPO in stage 1, and the stage-2 repairs (retention DPO,
+    on-policy distillation, multi-teacher distillation with a safety anchor, and the weight-space projection and push).
+  - Built the evaluation on the deployed 4-bit model, including the gates, the judge validation with the pplx-decider
+    conversions, AuditKIT and the quantization check.
+  - Released the models, datasets and code, and wrote this write-up.
+- **Md. Rayyan Hussain** (GitHub: [724ch1006-Rayyan](https://github.com/724ch1006-Rayyan))
+  - Benchmarked the Tiny Aya models early on: how well they understand and answer across our languages and mixes, and
+    whether multilingual and code-mixed jailbreaks work on them. This showed the attack surface was real and narrowed
+    the project to it.
+  - Wrote the human multi-turn attack traces across all eight surfaces, including the code-mixed ones. They became
+    STRATA's seed strategies and the 12 human-written attacks in the held-out set.
+  - Trialled other attacker models, including an uncensored Gemma-4-E4B. It produced a few jailbreaks, which joined the
+    human traces as seed examples, but its multilingual ability was weaker, so Qwen3.6-35B-A3B became the attacker.
+  - Hand-labelled the 128 judge-validation replies (§5).
 
 ### Acknowledgements
 We thank **Lexsi Labs** for organising the hackathon, for CuratorKIT and AuditKIT, and for the $20 of Hugging Face
@@ -742,12 +816,17 @@ Verified on 15 Nov 2026 against arXiv and the Hugging Face Hub.
 - Tools: TRL https://github.com/huggingface/trl; llama.cpp https://github.com/ggml-org/llama.cpp
 
 ## LLM usage statement
-[ASK: author to finalise. Suggested: research direction, hypotheses, experiment choices and STRATA's design are the
-author's (STRATA pre-dates the hackathon and builds on AutoDAN-Turbo); most of the hackathon code was written by an AI
-coding assistant (Claude) under the author's direction, ~X%; the write-up was drafted with AI help and edited by the author.]
+- **Research and design: ours.** The research direction, hypotheses, experiment choices, the interpretation of
+  results, and STRATA's design are the team's own. STRATA pre-dates the hackathon and builds on AutoDAN-Turbo.
+- **Code: AI-written (about 100%).** All code written during the hackathon was generated by an AI coding assistant
+  (Claude, in Claude Code) under our direction, and we reviewed and ran it.
+- **Write-up: about 60% AI-drafted.** The tables, metric definitions, dataset descriptions, kit sections and results
+  reporting were drafted with AI help. The framing, claims and conclusions are ours, and we edited the whole text.
+- **LLMs as part of the method** (attacker, chosen-reply writer, judges) are listed in §3 and are separate from the
+  above.
 
 ## Changelog
-- v1 (14 Nov): first submission.
+- v1 (16 Nov 2026): first submission.
 
 ## Appendix
 - **A. Judge settings.**
