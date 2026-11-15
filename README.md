@@ -1,4 +1,4 @@
-# Multilingual_JB: multilingual and code-mixed safety repair for tiny-aya-global (Lexsi Hackathon, Track 2a)
+# Multilingual_JB: multilingual and code-mixed safety repair for tiny-aya-global (Lexsi Hackathon, Track 2a/2b)
 
 > **Content warning.** This repository is code only, but it is built to evaluate and repair jailbreaks: scripts
 > read attack prompts and harmful model replies from local, git-ignored folders. No attack text, model reply
@@ -15,6 +15,15 @@ hurting translation, reading comprehension or over-refusal?
 - **Eight surfaces:** `en`, `hi`, `hi_en_mix`, `hinglish`, `te`, `te_en_mix`, `ja`, `ja_en_mix`.
 - **Write-up:** the full method, results and limitations are in the write-up linked from the submission
   (results tables are produced by `scripts/make_results_tables.py`).
+
+## Artifacts
+
+- Write-up: [TODO: HF article link]
+- Models: https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-models-6af997c8a617ddc3326889bc
+  (final model and every adapter: https://huggingface.co/kamikaze-san/tiny-aya-multilingual-safety)
+- Datasets: https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-datasets-6af9982d7e17226835a9ac36
+  (public results and labels; gated attack conversations)
+- Attacker: https://github.com/kamikaze-san/STRATA_mling
 
 ## Lineage and work done before the hackathon
 
@@ -174,4 +183,3 @@ verified prompt by prompt before the Mac judges them.
 ## License
 
 See `LICENSE`. The base model, judges and benchmarks keep their own licenses.
-# Mling_JB

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LexsiTrack2PromptEntry",
+  "description": "Standard schema for manual seeds and expanded attack/benign prompts.",
+  "type": "object",
+  "required": [
+    "prompt_id",
+    "language",
+    "register",
+    "source",
+    "attack_family",
+    "attack_prompt",
+    "benign_twin_prompt",
+    "category"
+  ],
+  "properties": {
+    "prompt_id": {
+      "type": "string",
+      "description": "Unique identifier, e.g. 'seed_hi_001' or 'exp_te_042'."
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "description": "Parent prompt ID if derived/expanded, null for root manual seeds."
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en", "hi", "te", "ja", "mixed_hinglish", "mixed_tenglish", "other"],
+      "description": "Target language or mixed code."
+    },
+    "register": {
+      "type": "string",
+      "enum": ["standard", "colloquial", "brainrot_slang", "academic", "bureaucratic"],
+      "description": "Linguistic register / dialect style."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["manual", "autodan_turbo", "curatorkit_synthetic"],
+      "description": "Source origin of the prompt."
+    },
+    "attack_family": {
+      "type": "string",
+      "description": "Family of the attack (e.g. roleplay, hypothetical_research, obfuscation, multi_turn_escalation, brainrot_masking)."
+    },
+    "category": {
+      "type": "string",
+      "description": "Harm category (e.g. cyber_exploit, cbrn, hate_harassment, fraud, disinformation)."
+    },
+    "attack_prompt": {
+      "type": "string",
+      "description": "The adversarial prompt designed to test safety."
+    },
+    "benign_twin_prompt": {
+      "type": "string",
+      "description": "Benign twin prompt in the SAME language and register to verify comprehension without refusal."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes from curator or pipeline."
+    }
+  }
+}
+

@@ -1,0 +1,76 @@
+# ==============================================================================
+# Global Configuration: Lexsi AI Safety Track 2 Multilingual Redteaming
+# Device-agnostic: Windows RTX 4060 (8GB), Mac M4 (48GB MPS), Colab/Kaggle (CUDA)
+# ==============================================================================
+
+hardware:
+  device: "auto"              # Options: "auto", "cuda", "mps", "cpu"
+  load_in_4bit: true         # Quantization for local 8GB GPU
+  max_memory_gb: 7.5         # Cap to prevent OOM on 8GB VRAM
+  offload_dir: "./cache/offload"
+  dtype: "bfloat16"          # "bfloat16", "float16", or "float32"
+
+models:
+  # Target models under evaluation (Cohere Labs only per Track 2 rules)
+  target:
+    model_id: "CohereLabs/tiny-aya-global"
+    alt_model_id: "CohereLabs/tiny-aya-fire"
+    temperature: 0.6
+    max_new_tokens: 512
+
+  # Pinned Local Evaluation Judge (Official reported metric)
+  judge:
+    model_id: "Qwen/Qwen3Guard-Gen-4B"
+    fallback_model_id: "Qwen/Qwen2.5-7B-Instruct"
+    temperature: 0.0
+    max_new_tokens: 256
+
+  # Internal Search Scorer for the Attack Loop (MUST BE DISTINCT from Judge)
+  attack_scorer:
+    model_id: "meta-llama/Llama-Guard-3-8B"
+    fallback_model_id: "Qwen/Qwen2.5-7B-Instruct"
+    temperature: 0.0
+    max_new_tokens: 256
+
+  # Attacker Agent for prompt expansion & strategy evolution
+  attacker:
+    provider: "local"        # "local" or "gemini"
+    model_id: "CohereForAI/aya-expanse-8b"
+    gemini_model: "gemini-2.5-flash"
+    temperature: 0.7
+    max_new_tokens: 1024
+
+languages:
+  - "en"               # English
+  - "hi"               # Hindi
+  - "te"               # Telugu
+  - "ja"               # Japanese
+  - "mixed_hinglish"   # Hindi-English Code-Mixed
+  - "mixed_tenglish"   # Telugu-English Code-Mixed
+
+registers:
+  - "standard"         # Formal / grammatically standard
+  - "colloquial"       # Everyday conversational
+  - "brainrot_slang"   # Gen-Z / internet slang / hyper-colloquial phonetic
+
+storage:
+  cache_db: "./cache/generations.sqlite"
+  cache_jsonl: "./cache/generations_backup.jsonl"
+  seeds_dir: "./data/01_seeds_raw"
+  expanded_dir: "./data/02_expanded"
+  curated_dir: "./data/03_curated"
+  eval_dir: "./data/04_eval_cache"
+
+track2_kit:
+  curator_kit:
+    enabled: true
+    min_quality_score: 0.7
+    dedup_threshold: 0.85
+  safetune:
+    enabled: true
+    default_repair: "dpo"     # Options: "dpo", "steering", "unlearning"
+  circuitkit:
+    enabled: false
+  auditkit:
+    enabled: true
+

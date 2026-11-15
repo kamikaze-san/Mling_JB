@@ -1,0 +1,83 @@
+# ==============================================================================
+# Gitignore for Lexsi Hackathon - Track 2 Multilingual Redteaming & Safety
+# Hard Rule 1: Attack prompts and model outputs stay strictly private.
+# Hard Rule 2: No secrets or credentials in the repo.
+# ==============================================================================
+
+# Private Data & Datasets (strictly ignored)
+data/
+datasets/
+seeds/
+*.jsonl
+*.json
+*.csv
+*.tsv
+*.parquet
+*.sqlite
+*.db
+
+# Exceptions: Allow templates/schemas at root or tests
+!schemas/**
+!configs/**
+!tests/mock_data/**
+
+# Model Checkpoints, Weights & Outputs
+checkpoints/
+models/
+weights/
+outputs/
+results/
+runs/
+logs/
+*.pkl
+*.pt
+*.bin
+*.safetensors
+*.gguf
+
+# Cache & Temporary Run Data
+.cache/
+cache/
+eval_cache/
+generation_cache/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment, Secrets & Credentials
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+*.pem
+*.key
+*.token
+
+# Hardware / IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Wandb & Tracking
+wandb/
+.wandb/
+
+
+# local virtualenvs
+.venv/
+.venv-*/
+
+# run logs at the repo root (they name local paths and run details) and local adapter copies
+logs_*.log
+*.log
+adapters/
+
+# merged / re-quantized GGUF exports (quantization survival)
+exports/
+# built dataset releases (gated part holds attack text)
+release/datasets/

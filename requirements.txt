@@ -1,0 +1,29 @@
+# Core Deep Learning & Hugging Face
+torch>=2.2.0
+transformers>=4.40.0
+accelerate>=0.28.0
+bitsandbytes>=0.43.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+
+# Multilingual Embeddings & Retrieval
+sentence-transformers>=2.6.0
+faiss-cpu>=1.8.0
+
+# Data, Configs & Storage
+pyyaml>=6.0.1
+pydantic>=2.0.0
+requests>=2.31.0
+tqdm>=4.66.0
+
+# Tracking (optional)
+wandb>=0.16.0
+
+# Eval + DPO harness
+datasets>=2.18.0          # FLORES+ / Belebele download, DPO datasets
+sacrebleu>=2.4.0          # chrF++
+llama-cpp-python>=0.3.0   # GGUF target + runtime LoRA (build with Metal on macOS)
+trl>=0.12.0               # DPOTrainer
+peft>=0.12.0              # LoRA adapters
+numpy>=1.26.0
+

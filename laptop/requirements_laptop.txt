@@ -1,0 +1,2 @@
+# llama-cpp-python: install the CUDA build separately (see BRIEF.md step 1)
+sacrebleu>=2.4

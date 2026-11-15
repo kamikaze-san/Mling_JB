@@ -1,0 +1,8 @@
+# <adapter folder under adapters/>   <run name>      (run in this order; finished runs are skipped)
+joint_all_p100_lr5e-5_e2_ck57_s0     joint_all_p100_lr5e-5_e2_ck57
+joint_all_p100_lr5e-5_e2_ck114_s0    joint_all_p100_lr5e-5_e2_ck114
+mixed_only_p100_lr5e-5_e3_s0         mixed_only_p100_lr5e-5_e3
+joint8_p100_lr5e-5_e3_s0             joint8_p100_lr5e-5_e3
+joint_all_p100_lr5e-5_e2_ck171_s0    joint_all_p100_lr5e-5_e2_ck171
+hinglish_only_p100_lr5e-5_e3_s0      hinglish_only_p100_lr5e-5_e3
+hi_en_mix_only_p100_lr5e-5_e3_s0     hi_en_mix_only_p100_lr5e-5_e3
