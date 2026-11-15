@@ -1,29 +1,31 @@
-# Core Deep Learning & Hugging Face
-torch>=2.2.0
-transformers>=4.40.0
-accelerate>=0.28.0
-bitsandbytes>=0.43.0
+# Versions used for every result in WRITEUP.md (Python 3.12). Training ran on HF Jobs with the same
+# transformers / trl / peft / accelerate pins (scripts/hf_job_train_dpo.sh, scripts/hf_job_stage2.sh).
+
+# Training and evaluation
+torch==2.15.0
+transformers==5.22.2
+trl==1.17.1
+peft==0.21.2
+accelerate==1.15.0
+datasets==5.1.0
+huggingface_hub==2.4.0
+safetensors==0.8.0
+llama-cpp-python==0.3.36   # GGUF target + runtime LoRA; build with Metal (macOS) or CUDA
+sacrebleu==2.6.0           # chrF++
+numpy==2.5.4
+pandas==3.1.1
+pyyaml==6.0.3
 sentencepiece>=0.2.0
 protobuf>=4.25.0
-
-# Multilingual Embeddings & Retrieval
-sentence-transformers>=2.6.0
-faiss-cpu>=1.8.0
-
-# Data, Configs & Storage
-pyyaml>=6.0.1
-pydantic>=2.0.0
 requests>=2.31.0
 tqdm>=4.66.0
 
-# Tracking (optional)
-wandb>=0.16.0
+# Early attacker design in src/attacker (not used for the reported results)
+sentence-transformers==6.2.0
+faiss-cpu==1.15.1
 
-# Eval + DPO harness
-datasets>=2.18.0          # FLORES+ / Belebele download, DPO datasets
-sacrebleu>=2.4.0          # chrF++
-llama-cpp-python>=0.3.0   # GGUF target + runtime LoRA (build with Metal on macOS)
-trl>=0.12.0               # DPOTrainer
-peft>=0.12.0              # LoRA adapters
-numpy>=1.26.0
-
+# Separate environments (see README "Environment"):
+#   pplx decider judges (Apple silicon):  mlx==0.32.4  mlx-lm==0.32.2  transformers==5.22.1
+#   Lexsi kits:                            curatorkit==0.1.25  auditkit==1.1.10
+#   figures (scripts/make_figures.py):     standard library only
+#   optional: bitsandbytes (4-bit loading in src/harness/device.py; falls back to full precision without it)
