@@ -182,4 +182,5 @@ verified prompt by prompt before the Mac judges them.
 
 ## License
 
-See `LICENSE`. The base model, judges and benchmarks keep their own licenses.
+Code: MIT (`LICENSE`). The adapters and datasets follow Tiny Aya's CC-BY-NC-4.0, and the base model, judges and
+benchmarks keep their own licenses.
