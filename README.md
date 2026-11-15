@@ -13,12 +13,11 @@ hurting translation, reading comprehension or over-refusal?
   happens on the BF16 weights; adapters are converted to **GGUF LoRA** and evaluated on the Q4_K_M base.
 - **Attack source:** STRATA, our multilingual extension of AutoDAN-Turbo (separate repository, see below).
 - **Eight surfaces:** `en`, `hi`, `hi_en_mix`, `hinglish`, `te`, `te_en_mix`, `ja`, `ja_en_mix`.
-- **Write-up:** the full method, results and limitations are in the write-up linked from the submission
-  (results tables are produced by `scripts/make_results_tables.py`).
+- **Write-up:** the full method, results and limitations are in [WRITEUP.md](WRITEUP.md) (tables from `scripts/writeup_tables.py`, figures from `scripts/make_figures.py`).
 
 ## Artifacts
 
-- Write-up: [TODO: HF article link]
+- **Write-up: [WRITEUP.md](WRITEUP.md)**
 - Models: https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-models-6af997c8a617ddc3326889bc
   (final model and every adapter: https://huggingface.co/kamikaze-san/tiny-aya-multilingual-safety)
 - Datasets: https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-datasets-6af9982d7e17226835a9ac36

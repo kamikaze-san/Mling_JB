@@ -190,7 +190,7 @@ def run_audit(
         model: Any = build_mock_model()
         model_desc = "mock_model"
     else:
-        model = AutoModel.resolve(f"openai:{model_name}", base_url=endpoint, api_key="dummy")
+        model = AutoModel.resolve(f"openai:{model_name}", api_base=endpoint, api_key="dummy")
         model_desc = f"openai:{model_name}@{endpoint}"
 
     scorers = [
