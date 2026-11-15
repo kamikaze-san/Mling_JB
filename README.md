@@ -1,13 +1,10 @@
 # Multilingual_JB: multilingual and code-mixed safety repair for tiny-aya-global (Lexsi Hackathon, Track 2a/2b)
 
-> **Content warning.** This repository is code only, but it is built to evaluate and repair jailbreaks: scripts
-> read attack prompts and harmful model replies from local, git-ignored folders. No attack text, model reply
-> or benchmark text is stored in this repository.
-
 **Question.** Does the safety of a small multilingual model hold across English, Hindi, Telugu, Japanese and
 code-mixed prompts (Hinglish, Hindi-English and Telugu-English mixes, Japanese-English mix), under multi-turn
-attacks found by an automated red-teamer, and can preference training (DPO + LoRA) close the gaps without
-hurting translation, reading comprehension or over-refusal?
+attacks found by an automated red-teamer, and can we close the gaps without hurting translation, reading
+comprehension or over-refusal? Stage 1 is DPO with a LoRA adapter. Stage 2 repairs the translation it costs, using
+multi-teacher on-policy distillation from Tiny Aya Fire with a frozen safety anchor.
 
 - **Target:** `CohereLabs/tiny-aya-global`, deployed as the official **Q4_K_M GGUF** (llama.cpp). Training
   happens on the BF16 weights; adapters are converted to **GGUF LoRA** and evaluated on the Q4_K_M base.
@@ -28,7 +25,7 @@ hurting translation, reading comprehension or over-refusal?
 
 - **STRATA** (attack generation) predates the hackathon: it is our multimodal adaptation of
   [AutoDAN-Turbo](https://github.com/SaFoLab-WISC/AutoDAN-Turbo). During the hackathon it was extended to
-  multilingual and code-mixed, multi-turn text attacks. Its public code release is a separate repository.
+  multilingual and code-mixed, multi-turn text attacks. Its public code is at [STRATA_mling](https://github.com/kamikaze-san/STRATA_mling).
 - **Everything in this repository** was written during the hackathon (Nov 2026). `CODE_INVENTORY.md` lists
   what was adapted and what is new.
 
@@ -170,6 +167,9 @@ verified prompt by prompt before the Mac judges them.
 | Belebele accuracy (en, hi, te, ja) | higher is better | exact option match |
 
 ## Data handling
+
+This repository holds code only. Attack prompts and model replies are read from local, git-ignored folders and
+never committed. The attack data is released separately, in a gated dataset.
 
 - Attack prompts, harmful replies, preference pairs and model outputs are **never committed**:
   `data/`, `cache/`, `checkpoints/`, `*.jsonl`, `*.json` (outside `configs/`/`schemas/`), `*.csv`, `*.sqlite`,
