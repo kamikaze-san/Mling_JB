@@ -16,7 +16,7 @@ adds under $1 of GPU time. We also show what
 makes such a repair safe: its direction in weight space, not its size. A repair that moves the weights back along the
 safety update makes the model easier to jailbreak again; one kept orthogonal to it does not.
 
-![Jailbreak compliance by language surface, base vs final model](docs/figures/compliance_by_surface.png)
+![Jailbreak compliance by language surface, base vs final model](docs/figures/compliance_by_surface.svg)
 
 > **Content warning.** This work is about jailbreaking a language model. The write-up reports only aggregate numbers
 > and contains no attack prompts or harmful outputs. The gated dataset linked under *Artifacts* contains working
@@ -348,6 +348,15 @@ token): **0.0047** on 150 FLORES-dev translation prompts, **0.0135** on 48 harml
 attack first turns. Safety DPO moved the model about **20× more on attacks than on translation**. The change is targeted;
 the te→en loss is a small side effect, not general forgetting.
 
+**The other direction: stage 1 improves English→Japanese** (+1.11 chrF++ [+0.37, +2.11]). Both stage-1 effects on
+translation are general, not tied to which languages were trained. Across all 15 stage-1 variants (single-surface,
+leave-one-out, joint), te→en is lower than base in every one (mean −0.61) and en→ja is higher in 12 of 15 (mean +0.70),
+including the run with no Japanese pairs (+1.42) and the English-only run (+0.96). The other four directions stay
+within noise. The en→ja gain is mostly register: DPO's chat-style chosen replies shift Japanese output towards the
+polite です/ます form (sentence endings: 63 → 81 of 200), which the FLORES+ references use (185 of 200). The 20 sentences
+that switch to polite gain 7.2 chrF++ on average. It is a closer match to the reference style, not necessarily better
+Japanese.
+
 ### 6.3 How safety transfers, and how much data it takes
 
 **Data size matters more than which language it comes from.**
@@ -448,7 +457,6 @@ into the part along the stage-1 update and the rest:
 | Multi-teacher OPD + anchor, step 50 | 0.14 | +0.01 | −0.1% | −0.3 |
 | Multi-teacher OPD + anchor, step 72 | 0.16 | +0.00 | −0.1% | +1.0 |
 
-![Share of the stage-1 safety update reversed vs compliance change, every stage-2 run](docs/figures/direction_vs_safety_cost.png)
 
 The ranking matches the compliance rise exactly. Translation-only and mixed OPD at step 50 change the adapter by
 the same amount (0.14 vs 0.15), but the mixed run points twice as far back along the safety update and loses five times
@@ -524,7 +532,7 @@ entirely and serves as an in-run control. Step 50 matches the other OPD runs in 
   - The Telugu twins gate fails exactly as it does for stage 1 (2 of 11 prompts). The general gate fails on one
     Japanese prompt (1/25).
 
-![Translation (FLORES+) change vs base: stage 1 vs final model](docs/figures/flores_vs_base.png)
+![Translation (FLORES+) change vs base: stage 1 vs final model](docs/figures/flores_vs_base.svg)
 
 The weight-space prediction held: the update is as large as translation-only OPD's (0.14 of stage 1) but orthogonal to it
 (cos +0.01, nothing reversed), and the model stayed as safe as stage 1.
