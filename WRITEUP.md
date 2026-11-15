@@ -595,7 +595,9 @@ within ±0.16).
 
 **Recommendation:** deploy the final model as the base GGUF plus the LoRA (`--lora adapter.gguf`), not as a merged
 re-quantized file. The runtime LoRA costs a little speed. On an M4 Pro with llama-server, generation runs at 78.9 tokens/s against
-84.4 for the base (−6.5%), and prompt processing at 570 against 675 tokens/s; a merged file runs at base speed.
+84.4 for the base (−6.5%), and prompt processing at 570 against 675 tokens/s; a merged file runs at base speed. For apps that need one file, the merged
+Q4_K_M is released anyway, in `merged/` of the model repo and labelled as less safe: it is still 52 points safer
+than the base.
 
 Reproducing the merge needs one fix: `convert_hf_to_gguf.py` takes the end-of-sequence token from `tokenizer_config`
 (`<|END_OF_TURN_TOKEN|>`, id 6), while the official GGUF and `generation_config.json` use id 3. With id 6, generation
@@ -709,7 +711,8 @@ together with a fix. The attack data stays gated.
 ## 10. Artifacts
 - **HF models collection:** https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-models-6af997c8a617ddc3326889bc
   - https://huggingface.co/kamikaze-san/tiny-aya-multilingual-safety: the final model at the root, and every other
-    adapter in `stage1/`, `stage2/` and `ablations/` (37 in all), each as PEFT and GGUF LoRA. Un-gated, CC-BY-NC-4.0.
+    adapter in `stage1/`, `stage2/` and `ablations/` (37 in all), each as PEFT and GGUF LoRA. Un-gated, CC-BY-NC-4.0. `merged/` holds a
+    single-file Q4_K_M of the final model, which keeps less of the safety (19.4% vs 12.6%, see the deployed-model results).
 - **HF datasets collection:** https://huggingface.co/collections/kamikaze-san/tiny-aya-multilingual-safety-datasets-6af9982d7e17226835a9ac36
   - https://huggingface.co/datasets/kamikaze-san/tiny-aya-multilingual-safety-eval (public): every run's results
     and judge labels, gate verdicts, capability scores, benign and twin prompts, FLORES IDs, human labels, all tables.
@@ -753,7 +756,7 @@ No model, dataset or result reported here was produced before the hackathon.
     on-policy distillation, multi-teacher distillation with a safety anchor, and the weight-space projection and push).
   - Built the evaluation on the deployed 4-bit model, including the gates, the judge validation with the pplx-decider
     conversions, AuditKIT and the quantization check.
-  - Released the models, datasets and code, and wrote this write-up.
+
 - **Md. Rayyan Hussain** (GitHub: [724ch1006-Rayyan](https://github.com/724ch1006-Rayyan))
   - Benchmarked the Tiny Aya models early on: how well they understand and answer across our languages and mixes, and
     whether multilingual and code-mixed jailbreaks work on them. This showed the attack surface was real and narrowed
@@ -773,7 +776,6 @@ dataset and the Aya Evaluation Suite, and for partnering on this track. Our judg
 port. We also rely on FLORES+ (OLDI), Belebele (Meta), and the llama.cpp, TRL, PEFT and MLX projects.
 
 ## References
-Verified on 15 Nov 2026 against arXiv and the Hugging Face Hub.
 
 **Papers**
 - Aakanksha et al. (2024). The Multilingual Alignment Prism: Aligning Global and Local Preferences to Reduce Harm. arXiv:2406.18682 (Aya Red-teaming).
